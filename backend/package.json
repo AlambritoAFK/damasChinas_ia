@@ -1,0 +1,22 @@
+{
+  "name": "damas-ai-backend",
+  "version": "1.0.0",
+  "description": "Backend API para juego de damas 8x8 con agente inteligente Minimax Alfa-Beta",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "cors": "^2.8.6",
+    "dotenv": "^18.0.1",
+    "express": "^5.2.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14"
+  }
+}
