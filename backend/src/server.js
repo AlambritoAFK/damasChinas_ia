@@ -11,15 +11,47 @@ require('dotenv').config();
 const path = require('path');
 const express = require('express');
 const cors = require('cors');
+const compression = require('compression');
+const rateLimit = require('express-rate-limit');
 
 const gameRoutes = require('./routes/gameRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// 1. Middlewares globales
+// Configurar trust proxy para plataformas en la nube (Render, Railway, Fly.io)
+app.set('trust proxy', 1);
+
+// 1. Middlewares globales de rendimiento y seguridad
+app.use(compression());
 app.use(cors());
 app.use(express.json());
+
+// Limitador de tasa global: 300 peticiones por ventana de 15 minutos por IP
+const globalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: process.env.NODE_ENV === 'test' ? 1000 : 300,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    success: false,
+    error: 'Demasiadas solicitudes desde esta IP, por favor intenta de nuevo en unos minutos.'
+  }
+});
+app.use('/api', globalLimiter);
+
+// Limitador especializado para cálculo de IA: 60 peticiones por minuto por IP
+const aiLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  limit: process.env.NODE_ENV === 'test' ? 1000 : 60,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    success: false,
+    error: 'Has alcanzado el límite de cálculos de IA por minuto. Por favor espera un momento.'
+  }
+});
+app.use('/api/game/ai-move', aiLimiter);
 
 // 2. Servir archivos estáticos del frontend (si están presentes)
 const frontendPath = path.join(__dirname, '../../frontend');
@@ -39,7 +71,8 @@ app.get('/api', (req, res) => {
       newGame: 'POST /api/game/new',
       validMoves: 'POST /api/game/valid-moves',
       aiMove: 'POST /api/game/ai-move',
-      applyMove: 'POST /api/game/apply-move'
+      applyMove: 'POST /api/game/apply-move',
+      resign: 'POST /api/game/resign'
     }
   });
 });

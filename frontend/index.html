@@ -49,6 +49,9 @@
     };
   </script>
 
+  <!-- SweetAlert2 para notificaciones y diálogos interactivos -->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
   <!-- Hojas de Estilos Modulares (Pasos 11 y 12) -->
   <link rel="stylesheet" href="css/board.css" />
   <link rel="stylesheet" href="css/style.css" />
@@ -346,7 +349,7 @@
             <div id="turnAvatar" class="turn-avatar piece-light">
               <div class="w-[65%] h-[65%] rounded-full border border-on-primary/30"></div>
             </div>
-            <div class="flex flex-col">
+            <div class="flex flex-col min-w-0">
               <span id="turnTitle" class="turn-text-title text-primary">Turno: Claras (Tú)</span>
               <span id="turnSubtitle" class="turn-text-sub">Haz clic en una ficha para moverla</span>
             </div>

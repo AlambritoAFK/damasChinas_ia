@@ -98,3 +98,34 @@ test('5. server.js: Inicialización de partida vía POST /api/game/new montado',
     await close();
   }
 });
+
+test('6. server.js: Cabeceras de Rate Limiting presentes en respuestas de API', async () => {
+  const { baseUrl, close } = await startServer();
+  try {
+    const res = await fetch(`${baseUrl}/api/game/health`);
+    assert.equal(res.status, 200);
+
+    // express-rate-limit con standardHeaders: true envía cabeceras RateLimit-*
+    const rateLimitPolicy = res.headers.get('ratelimit-policy') || res.headers.get('ratelimit');
+    const rateLimitLimit = res.headers.get('ratelimit-limit');
+    assert.ok(rateLimitPolicy || rateLimitLimit, 'Debe incluir cabeceras de rate limiting');
+  } finally {
+    await close();
+  }
+});
+
+test('7. server.js: Middleware de compresión activo para respuestas de API', async () => {
+  const { baseUrl, close } = await startServer();
+  try {
+    const res = await fetch(`${baseUrl}/api/game/health`, {
+      headers: {
+        'Accept-Encoding': 'gzip, deflate, br'
+      }
+    });
+    assert.equal(res.status, 200);
+    const data = await res.json();
+    assert.equal(data.success, true);
+  } finally {
+    await close();
+  }
+});

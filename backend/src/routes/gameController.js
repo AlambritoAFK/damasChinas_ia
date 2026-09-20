@@ -29,7 +29,8 @@ const {
 const {
   checkGameOver,
   applyMove,
-  isValidMove
+  isValidMove,
+  GAME_OVER_REASONS
 } = require('../game/rules');
 
 const {
@@ -491,6 +492,45 @@ function applyPlayerMove(req, res) {
   }
 }
 
+/**
+ * Endpoint para procesar la rendición voluntaria de un jugador.
+ * POST /api/game/resign
+ * 
+ * Payload esperado:
+ * {
+ *   "player": 1 // Jugador que se rinde (1 para Humano, -1 para IA)
+ * }
+ */
+function resignGame(req, res) {
+  try {
+    const { player = PLAYER_1 } = req.body || {};
+    const playerValidation = validatePlayer(player);
+    if (!playerValidation.isValid) {
+      return res.status(400).json({
+        success: false,
+        error: playerValidation.error
+      });
+    }
+
+    const resigningPlayer = Number(player);
+    const winner = getOpponent(resigningPlayer);
+
+    return res.status(200).json({
+      success: true,
+      isGameOver: true,
+      winner,
+      reason: GAME_OVER_REASONS.RESIGN,
+      message: `El jugador ${resigningPlayer === PLAYER_1 ? '1 (Humano)' : '2 (IA)'} se ha rendido. Victoria para el jugador ${winner === PLAYER_1 ? '1 (Humano)' : '2 (IA)'}.`
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      error: 'Error interno al procesar la rendición',
+      details: error.message
+    });
+  }
+}
+
 module.exports = {
   validateBoard,
   validateCoordinates,
@@ -499,5 +539,6 @@ module.exports = {
   newGame,
   getValidMoves,
   getAiMove,
-  applyPlayerMove
+  applyPlayerMove,
+  resignGame
 };

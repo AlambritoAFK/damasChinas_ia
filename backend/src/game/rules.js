@@ -32,7 +32,8 @@ const {
 const GAME_OVER_REASONS = {
   ELIMINATION: 'ELIMINATION', // Un jugador se quedó sin piezas
   BLOCKED: 'BLOCKED',         // El jugador activo no tiene movimientos válidos
-  DRAW: 'DRAW'                // Tablas o empate
+  DRAW: 'DRAW',               // Tablas o empate
+  RESIGN: 'RESIGN'            // Rendición voluntaria de un jugador
 };
 
 /**

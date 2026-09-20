@@ -14,7 +14,8 @@ const {
   newGame,
   getValidMoves,
   getAiMove,
-  applyPlayerMove
+  applyPlayerMove,
+  resignGame
 } = require('./gameController');
 
 // 1. Verificación de estado del servidor
@@ -31,5 +32,8 @@ router.post(['/ai-move', '/api/game/ai-move'], getAiMove);
 
 // 5. Aplicación y validación de jugadas en el servidor
 router.post(['/apply-move', '/api/game/apply-move'], applyPlayerMove);
+
+// 6. Rendición voluntaria de la partida
+router.post(['/resign', '/api/game/resign'], resignGame);
 
 module.exports = router;
