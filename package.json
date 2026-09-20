@@ -1,0 +1,24 @@
+{
+  "name": "damas-ia-monorepo",
+  "version": "1.0.0",
+  "description": "Juego de Damas 8x8 con Agente de Inteligencia Artificial Minimax Alfa-Beta",
+  "main": "backend/src/server.js",
+  "scripts": {
+    "start": "node backend/src/server.js",
+    "build": "npm --prefix backend install --omit=dev",
+    "install:all": "npm --prefix backend install",
+    "test": "npm --prefix backend test"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "checkers",
+    "damas",
+    "ai",
+    "minimax",
+    "alpha-beta"
+  ],
+  "author": "",
+  "license": "ISC"
+}

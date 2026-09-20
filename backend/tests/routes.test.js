@@ -335,3 +335,45 @@ test('8. POST /api/game/apply-move: Validación y ejecución de jugada en el ser
     await close();
   }
 });
+
+test('9. POST /api/game/resign: Rendición voluntaria y asignación correcta de victoria', async () => {
+  const { baseUrl, close } = await createTestServer();
+  try {
+    // Rendición con jugador inválido
+    const resInvalid = await fetch(`${baseUrl}/resign`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ player: 99 })
+    });
+    assert.equal(resInvalid.status, 400);
+
+    // Rendición válida de P1 (Humano) -> Victoria para P2 (IA)
+    const resP1 = await fetch(`${baseUrl}/resign`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ player: 1 })
+    });
+    assert.equal(resP1.status, 200);
+    const dataP1 = await resP1.json();
+    assert.equal(dataP1.success, true);
+    assert.equal(dataP1.isGameOver, true);
+    assert.equal(dataP1.winner, -1);
+    assert.equal(dataP1.reason, 'RESIGN');
+
+    // Rendición válida de P2 (IA) -> Victoria para P1 (Humano)
+    const resP2 = await fetch(`${baseUrl}/resign`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ player: -1 })
+    });
+    assert.equal(resP2.status, 200);
+    const dataP2 = await resP2.json();
+    assert.equal(dataP2.success, true);
+    assert.equal(dataP2.isGameOver, true);
+    assert.equal(dataP2.winner, 1);
+    assert.equal(dataP2.reason, 'RESIGN');
+  } finally {
+    await close();
+  }
+});
+
