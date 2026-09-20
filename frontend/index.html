@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html class="dark" lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Damas 8x8 con IA | Minimax Alfa-Beta</title>
+  
+  <!-- Tipografías de Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet" />
+
+  <!-- Tailwind CSS CDN para diseño base -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "surface-container-lowest": "#0a0e17",
+            "surface-container-low": "#181c24",
+            "surface-container": "#1c2029",
+            "surface-container-high": "#262a33",
+            "surface-container-highest": "#31353e",
+            "background": "#0f131c",
+            "surface": "#0f131c",
+            "primary": "#ffb68c",
+            "primary-container": "#d97736",
+            "primary-fixed": "#ffdbc9",
+            "on-primary": "#532200",
+            "secondary": "#7bd0ff",
+            "secondary-container": "#00a6e0",
+            "on-secondary": "#00354a",
+            "on-surface": "#dfe2ef",
+            "on-surface-variant": "#dbc1b4",
+            "outline": "#a38c80"
+          },
+          fontFamily: {
+            "headline-sm": ["Space Grotesk", "sans-serif"],
+            "headline-md": ["Space Grotesk", "sans-serif"],
+            "label-sm": ["JetBrains Mono", "monospace"],
+            "label-md": ["JetBrains Mono", "monospace"],
+            "body-md": ["Plus Jakarta Sans", "sans-serif"]
+          }
+        }
+      }
+    };
+  </script>
+
+  <!-- Hojas de Estilos Modulares (Pasos 11 y 12) -->
+  <link rel="stylesheet" href="css/board.css" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+
+<body class="bg-background text-on-surface font-body-md min-h-screen flex flex-col selection:bg-primary-container selection:text-on-primary">
+
+  <!-- ====================================================================
+       1. ENCABEZADO PRINCIPAL (HEADER)
+       ==================================================================== -->
+  <header class="app-header">
+    <div class="header-container">
+      
+      <!-- Logo e Identidad -->
+      <div class="brand-logo">
+        <div class="logo-badge">
+          <span class="material-symbols-outlined">token</span>
+        </div>
+        <div class="flex flex-col">
+          <span class="brand-title">DAMAS<span class="brand-accent">.IO</span></span>
+          <span class="brand-subtitle">Grandmaster Engine &bull; Minimax &alpha;-&beta;</span>
+        </div>
+      </div>
+
+      <!-- Controles y Acciones -->
+      <div class="header-actions">
+        
+        <!-- Selector de Modo de Juego -->
+        <div class="control-group">
+          <span class="material-symbols-outlined text-[16px] text-primary">sports_esports</span>
+          <label for="gameMode" class="control-label">Modo:</label>
+          <select id="gameMode" class="custom-select" aria-label="Modo de juego">
+            <option value="ai" selected>Humano vs IA</option>
+            <option value="pvp">2 Jugadores (Local)</option>
+          </select>
+        </div>
+
+        <!-- Selector de Dificultad -->
+        <div class="control-group" id="difficultyGroup">
+          <span class="material-symbols-outlined text-[16px] text-secondary">psychology</span>
+          <label for="difficulty" class="control-label">Nivel:</label>
+          <select id="difficulty" class="custom-select" aria-label="Nivel de dificultad de la IA">
+            <option value="easy">Fácil (Prof. 2)</option>
+            <option value="medium" selected>Medio (Prof. 4)</option>
+            <option value="hard">Difícil (Prof. 6)</option>
+          </select>
+        </div>
+
+        <!-- Botón Nueva Partida -->
+        <button id="btnNewGame" class="btn btn-primary" title="Reiniciar y comenzar una nueva partida">
+          <span class="material-symbols-outlined text-[18px]">restart_alt</span>
+          <span>Nueva Partida</span>
+        </button>
+
+        <!-- Botón Rendirse (Resign) -->
+        <button id="btnResign" class="btn btn-danger" title="Abandonar la partida actual">
+          <span class="material-symbols-outlined text-[18px]">flag</span>
+          <span>Rendirse</span>
+        </button>
+
+        <!-- Estado del Servidor Backend -->
+        <div id="serverStatus" class="server-badge" title="Estado de la conexión REST con el backend">
+          <span class="status-dot"></span>
+          <span id="serverStatusText">En Línea</span>
+        </div>
+
+      </div>
+
+    </div>
+  </header>
+
+  <!-- ====================================================================
+       2. ÁREA CENTRAL DE JUEGO (ARENA: TABLERO + PANELES)
+       ==================================================================== -->
+  <main class="main-arena">
+    <div class="arena-grid">
+
+      <!-- ==============================================================
+           2.1 TABLERO 8x8 DE DAMAS (BOARD ARENA)
+           ============================================================== -->
+      <section class="flex flex-col items-center justify-center w-full max-w-[660px]" aria-label="Tablero de juego">
+        
+        <!-- Marco Exterior de Madera Pulida -->
+        <div class="board-outer-frame">
+          
+          <!-- Coordenadas Superiores (A - H) -->
+          <div class="board-coords-h" aria-hidden="true">
+            <span>A</span><span>B</span><span>C</span><span>D</span><span>E</span><span>F</span><span>G</span><span>H</span>
+          </div>
+
+          <div class="flex items-center w-full">
+            <!-- Coordenadas Izquierdas (8 - 1) -->
+            <div class="board-coords-v" aria-hidden="true">
+              <span>8</span><span>7</span><span>6</span><span>5</span><span>4</span><span>3</span><span>2</span><span>1</span>
+            </div>
+
+            <!-- Cuadrícula 8x8 del Tablero -->
+            <div class="checkers-board-grid" id="checkersBoard" role="grid" aria-label="Cuadrícula de damas 8 por 8">
+              
+              <!-- FILA 0 (Rango 8) -->
+              <div class="board-square square-light" data-row="0" data-col="0" data-coord="A8"></div>
+              <div class="board-square square-dark" data-row="0" data-col="1" data-coord="B8">
+                <div class="checker-piece piece-dark" data-piece="-1">
+                  <div class="ring-outer"><div class="ring-inner"></div></div>
+                </div>
+              </div>
+              <div class="board-square square-light" data-row="0" data-col="2" data-coord="C8"></div>
+              <div class="board-square square-dark" data-row="0" data-col="3" data-coord="D8">
+                <div class="checker-piece piece-dark" data-piece="-1">
+                  <div class="ring-outer"><div class="ring-inner"></div></div>
+                </div>
+              </div>
+              <div class="board-square square-light" data-row="0" data-col="4" data-coord="E8"></div>
+              <div class="board-square square-dark" data-row="0" data-col="5" data-coord="F8">
+                <div class="checker-piece piece-dark" data-piece="-1">
+                  <div class="ring-outer"><div class="ring-inner"></div></div>
+                </div>
+              </div>
+              <div class="board-square square-light" data-row="0" data-col="6" data-coord="G8"></div>
+              <div class="board-square square-dark" data-row="0" data-col="7" data-coord="H8">
+                <div class="checker-piece piece-dark" data-piece="-1">
+                  <div class="ring-outer"><div class="ring-inner"></div></div>
+                </div>
+              </div>
+
+              <!-- FILA 1 (Rango 7) -->
+              <div class="board-square square-dark" data-row="1" data-col="0" data-coord="A7">
+                <div class="checker-piece piece-dark" data-piece="-1">
+                  <div class="ring-outer"><div class="ring-inner"></div></div>
+                </div>
+              </div>
+              <div class="board-square square-light" data-row="1" data-col="1" data-coord="B7"></div>
+              <div class="board-square square-dark" data-row="1" data-col="2" data-coord="C7">
+                <div class="checker-piece piece-dark" data-piece="-1">
+                  <div class="ring-outer"><div class="ring-inner"></div></div>
+                </div>
+              </div>
+              <div class="board-square square-light" data-row="1" data-col="3" data-coord="D7"></div>
+              <div class="board-square square-dark" data-row="1" data-col="4" data-coord="E7">
+                <div class="checker-piece piece-dark" data-piece="-1">
+                  <div class="ring-outer"><div class="ring-inner"></div></div>
+                </div>
+              </div>
+              <div class="board-square square-light" data-row="1" data-col="5" data-coord="F7"></div>
+              <div class="board-square square-dark" data-row="1" data-col="6" data-coord="G7">
+                <div class="checker-piece piece-dark" data-piece="-1">
+                  <div class="ring-outer"><div class="ring-inner"></div></div>
+                </div>
+              </div>
+              <div class="board-square square-light" data-row="1" data-col="7" data-coord="H7"></div>
+
+              <!-- FILA 2 (Rango 6) -->
+              <div class="board-square square-light" data-row="2" data-col="0" data-coord="A6"></div>
+              <div class="board-square square-dark" data-row="2" data-col="1" data-coord="B6">
+                <div class="checker-piece piece-dark" data-piece="-1">
+                  <div class="ring-outer"><div class="ring-inner"></div></div>
+                </div>
+              </div>
+              <div class="board-square square-light" data-row="2" data-col="2" data-coord="C6"></div>
+              <div class="board-square square-dark" data-row="2" data-col="3" data-coord="D6">
+                <div class="checker-piece piece-dark" data-piece="-1">
+                  <div class="ring-outer"><div class="ring-inner"></div></div>
+                </div>
+              </div>
+              <div class="board-square square-light" data-row="2" data-col="4" data-coord="E6"></div>
+              <div class="board-square square-dark" data-row="2" data-col="5" data-coord="F6">
+                <div class="checker-piece piece-dark" data-piece="-1">
+                  <div class="ring-outer"><div class="ring-inner"></div></div>
+                </div>
+              </div>
+              <div class="board-square square-light" data-row="2" data-col="6" data-coord="G6"></div>
+              <div class="board-square square-dark" data-row="2" data-col="7" data-coord="H6">
+                <div class="checker-piece piece-dark" data-piece="-1">
+                  <div class="ring-outer"><div class="ring-inner"></div></div>
+                </div>
+              </div>
+
+              <!-- FILA 3 (Rango 5 - Zona Neutra) -->
+              <div class="board-square square-dark" data-row="3" data-col="0" data-coord="A5"></div>
+              <div class="board-square square-light" data-row="3" data-col="1" data-coord="B5"></div>
+              <div class="board-square square-dark" data-row="3" data-col="2" data-coord="C5"></div>
+              <div class="board-square square-light" data-row="3" data-col="3" data-coord="D5"></div>
+              <div class="board-square square-dark" data-row="3" data-col="4" data-coord="E5"></div>
+              <div class="board-square square-light" data-row="3" data-col="5" data-coord="F5"></div>
+              <div class="board-square square-dark" data-row="3" data-col="6" data-coord="G5"></div>
+              <div class="board-square square-light" data-row="3" data-col="7" data-coord="H5"></div>
+
+              <!-- FILA 4 (Rango 4 - Zona Neutra) -->
+              <div class="board-square square-light" data-row="4" data-col="0" data-coord="A4"></div>
+              <div class="board-square square-dark" data-row="4" data-col="1" data-coord="B4"></div>
+              <div class="board-square square-light" data-row="4" data-col="2" data-coord="C4"></div>
+              <div class="board-square square-dark" data-row="4" data-col="3" data-coord="D4"></div>
+              <div class="board-square square-light" data-row="4" data-col="4" data-coord="E4"></div>
+              <div class="board-square square-dark" data-row="4" data-col="5" data-coord="F4"></div>
+              <div class="board-square square-light" data-row="4" data-col="6" data-coord="G4"></div>
+              <div class="board-square square-dark" data-row="4" data-col="7" data-coord="H4"></div>
+
+              <!-- FILA 5 (Rango 3) -->
+              <div class="board-square square-dark" data-row="5" data-col="0" data-coord="A3">
+                <div class="checker-piece piece-light" data-piece="1">
+                  <div class="ring-outer"><div class="ring-inner"></div></div>
+                </div>
+              </div>
+              <div class="board-square square-light" data-row="5" data-col="1" data-coord="B3"></div>
+              <div class="board-square square-dark" data-row="5" data-col="2" data-coord="C3">
+                <div class="checker-piece piece-light" data-piece="1">
+                  <div class="ring-outer"><div class="ring-inner"></div></div>
+                </div>
+              </div>
+              <div class="board-square square-light" data-row="5" data-col="3" data-coord="D3"></div>
+              <div class="board-square square-dark" data-row="5" data-col="4" data-coord="E3">
+                <div class="checker-piece piece-light" data-piece="1">
+                  <div class="ring-outer"><div class="ring-inner"></div></div>
+                </div>
+              </div>
+              <div class="board-square square-light" data-row="5" data-col="5" data-coord="F3"></div>
+              <div class="board-square square-dark" data-row="5" data-col="6" data-coord="G3">
+                <div class="checker-piece piece-light" data-piece="1">
+                  <div class="ring-outer"><div class="ring-inner"></div></div>
+                </div>
+              </div>
+              <div class="board-square square-light" data-row="5" data-col="7" data-coord="H3"></div>
+
+              <!-- FILA 6 (Rango 2) -->
+              <div class="board-square square-light" data-row="6" data-col="0" data-coord="A2"></div>
+              <div class="board-square square-dark" data-row="6" data-col="1" data-coord="B2">
+                <div class="checker-piece piece-light" data-piece="1">
+                  <div class="ring-outer"><div class="ring-inner"></div></div>
+                </div>
+              </div>
+              <div class="board-square square-light" data-row="6" data-col="2" data-coord="C2"></div>
+              <div class="board-square square-dark" data-row="6" data-col="3" data-coord="D2">
+                <div class="checker-piece piece-light" data-piece="1">
+                  <div class="ring-outer"><div class="ring-inner"></div></div>
+                </div>
+              </div>
+              <div class="board-square square-light" data-row="6" data-col="4" data-coord="E2"></div>
+              <div class="board-square square-dark" data-row="6" data-col="5" data-coord="F2">
+                <div class="checker-piece piece-light" data-piece="1">
+                  <div class="ring-outer"><div class="ring-inner"></div></div>
+                </div>
+              </div>
+              <div class="board-square square-light" data-row="6" data-col="6" data-coord="G2"></div>
+              <div class="board-square square-dark" data-row="6" data-col="7" data-coord="H2">
+                <div class="checker-piece piece-light" data-piece="1">
+                  <div class="ring-outer"><div class="ring-inner"></div></div>
+                </div>
+              </div>
+
+              <!-- FILA 7 (Rango 1) -->
+              <div class="board-square square-dark" data-row="7" data-col="0" data-coord="A1">
+                <div class="checker-piece piece-light" data-piece="1">
+                  <div class="ring-outer"><div class="ring-inner"></div></div>
+                </div>
+              </div>
+              <div class="board-square square-light" data-row="7" data-col="1" data-coord="B1"></div>
+              <div class="board-square square-dark" data-row="7" data-col="2" data-coord="C1">
+                <div class="checker-piece piece-light" data-piece="1">
+                  <div class="ring-outer"><div class="ring-inner"></div></div>
+                </div>
+              </div>
+              <div class="board-square square-light" data-row="7" data-col="3" data-coord="D1"></div>
+              <div class="board-square square-dark" data-row="7" data-col="4" data-coord="E1">
+                <div class="checker-piece piece-light" data-piece="1">
+                  <div class="ring-outer"><div class="ring-inner"></div></div>
+                </div>
+              </div>
+              <div class="board-square square-light" data-row="7" data-col="5" data-coord="F1"></div>
+              <div class="board-square square-dark" data-row="7" data-col="6" data-coord="G1">
+                <div class="checker-piece piece-light" data-piece="1">
+                  <div class="ring-outer"><div class="ring-inner"></div></div>
+                </div>
+              </div>
+              <div class="board-square square-light" data-row="7" data-col="7" data-coord="H1"></div>
+
+            </div>
+          </div>
+
+          <!-- Coordenadas Inferiores (A - H) -->
+          <div class="board-coords-h coords-bottom" aria-hidden="true">
+            <span>A</span><span>B</span><span>C</span><span>D</span><span>E</span><span>F</span><span>G</span><span>H</span>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- ==============================================================
+           2.2 PANEL LATERAL (TURNO, MARCADOR, REGISTRO Y MÉTRICAS)
+           ============================================================== -->
+      <aside class="side-panel" aria-label="Panel de estado y estadísticas">
+        
+        <!-- Indicador de Turno Activo -->
+        <div id="turnBanner" class="turn-banner active-white">
+          <div class="turn-info">
+            <div id="turnAvatar" class="turn-avatar piece-light">
+              <div class="w-[65%] h-[65%] rounded-full border border-on-primary/30"></div>
+            </div>
+            <div class="flex flex-col">
+              <span id="turnTitle" class="turn-text-title text-primary">Turno: Claras (Tú)</span>
+              <span id="turnSubtitle" class="turn-text-sub">Haz clic en una ficha para moverla</span>
+            </div>
+          </div>
+          <!-- Badge IA Pensando -->
+          <div id="aiThinkingBadge" class="ai-thinking-badge">
+            <span class="material-symbols-outlined text-[14px] animate-spin">progress_activity</span>
+            <span>Calculando...</span>
+          </div>
+        </div>
+
+        <!-- Marcador de Piezas y Capturas (Scoreboard) -->
+        <div class="scoreboard-grid">
+          
+          <!-- Jugador 1 (Claras / Humano) -->
+          <div class="score-card border-primary/30">
+            <div class="score-card-header">
+              <div class="flex items-center gap-1.5">
+                <div class="w-3.5 h-3.5 rounded-full piece-light"></div>
+                <span class="score-player-name text-primary">Claras</span>
+              </div>
+              <span class="score-badge">Humano</span>
+            </div>
+            <div class="score-counts">
+              <span id="whiteCount" class="piece-count-large text-primary">12</span>
+              <div class="flex flex-col text-right">
+                <span class="piece-count-sub">Damas: <strong id="whiteKings" class="text-on-surface">0</strong></span>
+                <span class="piece-count-sub">Comidas: <strong id="blackCaptured" class="text-secondary">0</strong></span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Jugador 2 (Oscuras / IA) -->
+          <div class="score-card border-secondary/30">
+            <div class="score-card-header">
+              <div class="flex items-center gap-1.5">
+                <div class="w-3.5 h-3.5 rounded-full piece-dark border border-gray-600"></div>
+                <span class="score-player-name text-secondary">Oscuras</span>
+              </div>
+              <span class="score-badge" id="player2TypeBadge">IA</span>
+            </div>
+            <div class="score-counts">
+              <span id="blackCount" class="piece-count-large text-secondary">12</span>
+              <div class="flex flex-col text-right">
+                <span class="piece-count-sub">Damas: <strong id="blackKings" class="text-on-surface">0</strong></span>
+                <span class="piece-count-sub">Comidas: <strong id="whiteCaptured" class="text-primary">0</strong></span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Panel de Registro de Jugadas (Docket de Notación) -->
+        <div class="moves-docket-card">
+          <div class="docket-header">
+            <div class="docket-title">
+              <span class="material-symbols-outlined text-primary text-[18px]">history_edu</span>
+              <span>Registro de Jugadas</span>
+            </div>
+            <span id="movesCount" class="docket-badge">0 Movimientos</span>
+          </div>
+
+          <!-- Encabezado de Columnas -->
+          <div class="docket-table-header">
+            <span>#</span>
+            <span>Claras</span>
+            <span>Oscuras</span>
+          </div>
+
+          <!-- Lista de Jugadas Históricas con Scroll -->
+          <div id="movesList" class="docket-moves-list" tabindex="0" aria-label="Lista de jugadas realizadas">
+            <div class="text-center py-6 text-outline text-label-sm italic opacity-70">
+              La partida no ha comenzado.
+            </div>
+          </div>
+
+          <!-- Controles de Navegación del Historial -->
+          <div class="docket-footer">
+            <div class="nav-btn-group">
+              <button id="btnFirstMove" class="icon-btn" title="Ir al primer movimiento" aria-label="Primer movimiento">
+                <span class="material-symbols-outlined">first_page</span>
+              </button>
+              <button id="btnPrevMove" class="icon-btn" title="Movimiento anterior" aria-label="Movimiento anterior">
+                <span class="material-symbols-outlined">chevron_left</span>
+              </button>
+              <button id="btnNextMove" class="icon-btn" title="Movimiento siguiente" aria-label="Movimiento siguiente">
+                <span class="material-symbols-outlined">chevron_right</span>
+              </button>
+              <button id="btnLastMove" class="icon-btn" title="Ir al último movimiento" aria-label="Último movimiento">
+                <span class="material-symbols-outlined">last_page</span>
+              </button>
+            </div>
+            <button id="btnCopyPdn" class="icon-btn px-2 w-auto font-mono text-[11px] gap-1" title="Copiar Notación de la Partida">
+              <span class="material-symbols-outlined text-[13px]">content_copy</span>
+              <span>PDN</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Tarjeta Colapsable de Métricas de la IA -->
+        <div class="metrics-card" id="aiMetricsCard">
+          <div class="metrics-header" id="toggleAiMetrics" role="button" tabindex="0" aria-expanded="true">
+            <div class="metrics-title">
+              <span class="material-symbols-outlined text-[18px]">analytics</span>
+              <span>Rendimiento del Motor IA</span>
+            </div>
+            <span class="material-symbols-outlined text-[18px] text-outline transform transition-transform" id="metricsChevron">expand_more</span>
+          </div>
+          <div class="metrics-body" id="metricsBody">
+            <div class="metrics-item">
+              <span class="metrics-label">Tiempo</span>
+              <span id="aiTime" class="metrics-value text-secondary">0 ms</span>
+            </div>
+            <div class="metrics-item">
+              <span class="metrics-label">Nodos</span>
+              <span id="aiNodes" class="metrics-value text-primary">0</span>
+            </div>
+            <div class="metrics-item">
+              <span class="metrics-label">Profundidad</span>
+              <span id="aiDepth" class="metrics-value">4</span>
+            </div>
+          </div>
+        </div>
+
+      </aside>
+
+    </div>
+  </main>
+
+  <!-- ====================================================================
+       3. MODAL DE FIN DE PARTIDA (GAME OVER DIALOG)
+       ==================================================================== -->
+  <dialog id="gameOverModal" class="game-modal" aria-labelledby="modalTitle">
+    <div class="modal-content-card">
+      
+      <!-- Icono Central del Resultado -->
+      <div class="modal-icon-wrapper" id="modalIconWrapper">
+        <span class="material-symbols-outlined" id="modalIcon">emoji_events</span>
+      </div>
+
+      <!-- Título y Mensaje -->
+      <h2 id="modalTitle" class="modal-title">¡Victoria!</h2>
+      <p id="modalDescription" class="modal-description">
+        Has ganado la partida contra el Agente Inteligente.
+      </p>
+
+      <!-- Estadísticas de la Partida -->
+      <div class="modal-stats-grid" id="modalStats">
+        <div class="modal-stat-box">
+          <span id="statMoves" class="modal-stat-num">0</span>
+          <span class="modal-stat-text">Jugadas</span>
+        </div>
+        <div class="modal-stat-box">
+          <span id="statCaptures" class="modal-stat-num">0</span>
+          <span class="modal-stat-text">Capturas</span>
+        </div>
+        <div class="modal-stat-box">
+          <span id="statTime" class="modal-stat-num">0:00</span>
+          <span class="modal-stat-text">Duración</span>
+        </div>
+      </div>
+
+      <!-- Botones de Acción del Modal -->
+      <div class="modal-actions">
+        <button id="btnPlayAgain" class="btn btn-primary">
+          <span class="material-symbols-outlined text-[18px]">replay</span>
+          <span>Jugar de Nuevo</span>
+        </button>
+        <button id="btnCloseModal" class="btn btn-danger">
+          <span class="material-symbols-outlined text-[18px]">close</span>
+          <span>Cerrar</span>
+        </button>
+      </div>
+
+    </div>
+  </dialog>
+
+  <!-- ====================================================================
+       4. SCRIPTS DE INTERACCIÓN CLIENTE (MODULAR ES6)
+       ==================================================================== -->
+  <!-- Script inicial para interacción básica de métricas e interactividad -->
+  <script>
+    // Soporte para colapsar / expandir métricas
+    const toggleMetrics = document.getElementById('toggleAiMetrics');
+    const metricsBody = document.getElementById('metricsBody');
+    const metricsChevron = document.getElementById('metricsChevron');
+    if (toggleMetrics && metricsBody) {
+      toggleMetrics.addEventListener('click', () => {
+        const isHidden = metricsBody.style.display === 'none';
+        metricsBody.style.display = isHidden ? 'grid' : 'none';
+        metricsChevron.style.transform = isHidden ? 'rotate(0deg)' : 'rotate(180deg)';
+      });
+    }
+
+    // Modal cerrar manual si se abre
+    const modal = document.getElementById('gameOverModal');
+    const btnCloseModal = document.getElementById('btnCloseModal');
+    if (btnCloseModal && modal) {
+      btnCloseModal.addEventListener('click', () => modal.close());
+    }
+  </script>
+
+  <!-- Controlador Modular Principal (Paso 15) -->
+  <script type="module" src="js/app.js"></script>
+
+</body>
+</html>

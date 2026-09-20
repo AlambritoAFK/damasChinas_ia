@@ -1,0 +1,400 @@
+/**
+ * frontend/css/board.css
+ * 
+ * Estilos visuales del tablero 8x8 de damas y renderizado de piezas 3D.
+ * Integra las texturas realistas de madera de nogal y arce,
+ * biseles de marco de madera pulida, piezas en relieve con anillos concéntricos,
+ * insignias de dama (corona), estados de interacción y animaciones.
+ */
+
+/* ==========================================================================
+   1. Marco y Contenedor Exterior del Tablero
+   ========================================================================== */
+
+.board-outer-frame {
+  background: linear-gradient(145deg, #2e1a10 0%, #1c0e08 40%, #29170e 70%, #150a05 100%),
+              repeating-linear-gradient(45deg, rgba(255, 182, 140, 0.03) 0px, rgba(255, 182, 140, 0.03) 2px, transparent 2px, transparent 10px);
+  box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.8),
+              inset 0 2px 4px rgba(255, 182, 140, 0.18),
+              inset 0 -4px 10px rgba(0, 0, 0, 0.7),
+              inset 0 0 0 3px #3d2215,
+              inset 0 0 0 6px #120703;
+  border-radius: 1.25rem;
+  padding: 1rem;
+  position: relative;
+  user-select: none;
+  width: 100%;
+  max-width: 660px;
+}
+
+@media (max-width: 640px) {
+  .board-outer-frame {
+    padding: 0.5rem;
+  }
+}
+
+/* Letras de columnas (A - H) y números de filas (8 - 1) */
+.board-coords-h {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  text-align: center;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #e0b48f;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9), 0 0 8px rgba(217, 119, 54, 0.35);
+  letter-spacing: 0.12em;
+  padding: 0 0.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.board-coords-h.coords-bottom {
+  margin-top: 0.25rem;
+  margin-bottom: 0;
+}
+
+.board-coords-v {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #e0b48f;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9), 0 0 8px rgba(217, 119, 54, 0.35);
+  height: 100%;
+  padding-right: 0.5rem;
+  user-select: none;
+}
+
+/* ==========================================================================
+   2. Cuadrícula 8x8 del Tablero (CSS Grid)
+   ========================================================================== */
+
+.checkers-board-grid {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  grid-template-rows: repeat(8, 1fr);
+  aspect-ratio: 1 / 1;
+  width: 100%;
+  border-radius: 0.75rem;
+  overflow: hidden;
+  box-shadow: inset 0 0 16px rgba(0, 0, 0, 0.9),
+              0 0 0 3px #180d07,
+              0 0 0 6px #d4a373,
+              0 0 0 8px #0f0704,
+              0 12px 30px rgba(0, 0, 0, 0.75);
+  border: 2px solid #5a3420;
+  position: relative;
+  background-color: #0a0e17;
+}
+
+/* ==========================================================================
+   3. Casillas: Claras (Maple / Arce) y Oscuras (Walnut / Nogal)
+   ========================================================================== */
+
+.board-square {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s ease;
+}
+
+/* Casillas Claras (Inactivas en Damas estándar) */
+.square-light {
+  background: linear-gradient(135deg, #ecd3b4 0%, #d8b082 45%, #c89e6e 55%, #dfbe96 100%),
+              repeating-linear-gradient(92deg, rgba(166, 112, 65, 0.08) 0px, rgba(166, 112, 65, 0.08) 2px, transparent 2px, transparent 14px),
+              repeating-linear-gradient(4deg, rgba(255, 255, 255, 0.12) 0px, rgba(255, 255, 255, 0.12) 4px, transparent 4px, transparent 18px);
+  box-shadow: inset 1px 1px 2px rgba(255, 255, 255, 0.4),
+              inset -1px -1px 2px rgba(92, 52, 22, 0.35);
+}
+
+/* Casillas Oscuras (Jugables) */
+.square-dark {
+  background: linear-gradient(135deg, #3f2214 0%, #2b150b 40%, #381d11 70%, #1f0e07 100%),
+              repeating-linear-gradient(88deg, rgba(15, 7, 3, 0.3) 0px, rgba(15, 7, 3, 0.3) 2px, transparent 2px, transparent 12px),
+              repeating-radial-gradient(circle at 70% 30%, rgba(85, 42, 20, 0.2) 0px, transparent 18px);
+  box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.65),
+              inset 0 0 3px rgba(0, 0, 0, 0.85);
+}
+
+.square-dark:hover {
+  filter: brightness(1.05);
+}
+
+/* ==========================================================================
+   4. Renderizado de Piezas (Checkers Pieces) con Relieve 3D
+   ========================================================================== */
+
+.checker-piece {
+  width: 84%;
+  height: 84%;
+  border-radius: 50%;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 10;
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1),
+              box-shadow 0.25s ease,
+              opacity 0.25s ease;
+  user-select: none;
+}
+
+.checker-piece:hover {
+  transform: scale(1.06);
+}
+
+.checker-piece:active {
+  transform: scale(0.96);
+}
+
+/* 4.1 Fichas Oscuras (Ébano Pulido / IA / Jugador 2) */
+.piece-dark {
+  background: radial-gradient(circle at 35% 30%, #32333d 0%, #17181c 45%, #0b0b0e 80%, #050507 100%) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.85),
+              inset 0 2px 3px rgba(255, 255, 255, 0.32),
+              inset 0 -3px 5px rgba(0, 0, 0, 0.95),
+              0 0 0 1.5px rgba(255, 255, 255, 0.18),
+              0 0 0 2.5px #121216 !important;
+  border: 1px solid #4a4b56 !important;
+}
+
+.piece-dark .ring-outer {
+  border: 1.5px solid rgba(220, 225, 240, 0.35) !important;
+  background: radial-gradient(circle at 40% 35%, #25262c 0%, #101114 65%, #070709 100%) !important;
+  box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.22),
+              0 1px 3px rgba(0, 0, 0, 0.7) !important;
+}
+
+.piece-dark .ring-inner {
+  border: 1.5px solid rgba(220, 225, 240, 0.28) !important;
+  background: radial-gradient(circle at 45% 40%, #1e1f24 0%, #0d0e11 80%) !important;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.18) !important;
+}
+
+/* 4.2 Fichas Claras (Roble Dorado / Marfil Cálido / Jugador 1 / Humano) */
+.piece-light {
+  background: radial-gradient(circle at 35% 30%, #ffe0cc 0%, #ffb68c 40%, #d97736 80%, #753400 100%) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.7),
+              inset 0 2px 3px rgba(255, 255, 255, 0.65),
+              inset 0 -3px 5px rgba(73, 29, 0, 0.9),
+              0 0 0 1.5px rgba(255, 255, 255, 0.3),
+              0 0 0 2.5px #532200 !important;
+  border: 1px solid #ffdbc9 !important;
+}
+
+.piece-light .ring-outer {
+  border: 1.5px solid rgba(255, 235, 220, 0.5) !important;
+  background: radial-gradient(circle at 40% 35%, #ffb68c 0%, #d97736 65%, #994703 100%) !important;
+  box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.4),
+              0 1px 3px rgba(0, 0, 0, 0.5) !important;
+}
+
+.piece-light .ring-inner {
+  border: 1.5px solid rgba(255, 235, 220, 0.4) !important;
+  background: radial-gradient(circle at 45% 40%, #ffdbc9 0%, #ffb68c 80%) !important;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.3) !important;
+}
+
+/* Anillos concéntricos estructurados */
+.ring-outer {
+  width: 72%;
+  height: 72%;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ring-inner {
+  width: 52%;
+  height: 52%;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ==========================================================================
+   5. Damas / Reyes (Kings) con Insignia de Corona Dorada
+   ========================================================================== */
+
+.piece-king {
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.9),
+              0 0 0 2px #ffc107,
+              inset 0 2px 4px rgba(255, 255, 255, 0.7) !important;
+}
+
+.piece-king .crown-icon {
+  font-family: 'Material Symbols Outlined', sans-serif;
+  font-size: 1.35rem;
+  line-height: 1;
+  color: #ffda79;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.9)) drop-shadow(0 0 6px rgba(255, 193, 7, 0.6));
+  animation: crown-glow 2.5s ease-in-out infinite alternate;
+}
+
+@keyframes crown-glow {
+  0% {
+    filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.8)) drop-shadow(0 0 4px rgba(255, 193, 7, 0.4));
+  }
+  100% {
+    filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.95)) drop-shadow(0 0 9px rgba(255, 218, 121, 0.85));
+  }
+}
+
+/* ==========================================================================
+   6. Estados Interactivos: .selected, .valid-move, .must-capture
+   ========================================================================== */
+
+/* 6.1 Ficha Seleccionada */
+.checker-piece.selected {
+  transform: translateY(-4px) scale(1.1) !important;
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.9),
+              0 0 0 3px #ffb68c,
+              0 0 20px rgba(255, 182, 140, 0.85) !important;
+  z-index: 30;
+}
+
+/* Halo luminoso en la casilla de la pieza seleccionada */
+.square-dark.selected-square::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle, rgba(255, 182, 140, 0.25) 0%, transparent 75%);
+  pointer-events: none;
+  z-index: 5;
+}
+
+/* 6.2 Casillas Destino Válidas (.valid-move) */
+.square-dark.valid-move {
+  cursor: pointer;
+}
+
+.valid-move-pip {
+  position: absolute;
+  width: 32%;
+  height: 32%;
+  border-radius: 50%;
+  background: #7bd0ff;
+  box-shadow: 0 0 12px #7bd0ff, 0 0 4px rgba(255, 255, 255, 0.8);
+  pointer-events: none;
+  z-index: 15;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+  animation: pip-pulse 1.6s infinite ease-in-out;
+}
+
+.valid-move:hover .valid-move-pip {
+  transform: scale(1.35);
+  box-shadow: 0 0 18px #7bd0ff, 0 0 8px rgba(255, 255, 255, 1);
+}
+
+/* Pip cuando es una captura obligatoria o salto */
+.valid-move-pip.capture-target {
+  background: #ffb68c;
+  box-shadow: 0 0 14px #ffb68c, 0 0 6px #d97736;
+  animation: capture-pip-pulse 1.2s infinite ease-in-out;
+}
+
+@keyframes pip-pulse {
+  0%, 100% {
+    transform: scale(0.9);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1.15);
+    opacity: 1;
+  }
+}
+
+@keyframes capture-pip-pulse {
+  0%, 100% {
+    transform: scale(0.95);
+    opacity: 0.85;
+  }
+  50% {
+    transform: scale(1.25);
+    opacity: 1;
+  }
+}
+
+/* 6.3 Resaltado de Captura Obligatoria (.must-capture) */
+.checker-piece.must-capture {
+  animation: must-capture-alert 1.2s infinite ease-in-out;
+  box-shadow: 0 0 0 3px #ff5252,
+              0 0 16px rgba(255, 82, 82, 0.85),
+              0 4px 12px rgba(0, 0, 0, 0.8) !important;
+}
+
+@keyframes must-capture-alert {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 2px #ff5252,
+                0 0 12px rgba(255, 82, 82, 0.65),
+                0 4px 10px rgba(0, 0, 0, 0.8);
+  }
+  50% {
+    transform: scale(1.08);
+    box-shadow: 0 0 0 4px #ff1744,
+                0 0 24px rgba(255, 23, 68, 0.95),
+                0 6px 16px rgba(0, 0, 0, 0.9);
+  }
+}
+
+/* ==========================================================================
+   7. Animaciones de Movimiento y Captura (60 FPS)
+   ========================================================================== */
+
+/* Ficha siendo trasladada */
+.checker-piece.animating-move {
+  transition: transform 0.32s cubic-bezier(0.22, 1, 0.36, 1) !important;
+  z-index: 50 !important;
+  pointer-events: none;
+}
+
+/* Ficha capturada (desvanecimiento y encogimiento) */
+.checker-piece.piece-captured {
+  animation: capture-fade-out 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  pointer-events: none;
+}
+
+@keyframes capture-fade-out {
+  0% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+    filter: brightness(1.5);
+  }
+  50% {
+    transform: scale(1.2) rotate(15deg);
+    opacity: 0.7;
+    filter: brightness(2) contrast(1.5);
+  }
+  100% {
+    transform: scale(0.2) rotate(45deg);
+    opacity: 0;
+    filter: brightness(0.2);
+  }
+}
+
+/* Efecto de coronación a dama */
+.checker-piece.crowning-animation {
+  animation: crowning-sparkle 0.75s ease-out forwards;
+}
+
+@keyframes crowning-sparkle {
+  0% {
+    transform: scale(1) translateY(0);
+    box-shadow: 0 0 0 0 rgba(255, 215, 0, 0.8);
+  }
+  50% {
+    transform: scale(1.25) translateY(-8px);
+    box-shadow: 0 0 30px 10px rgba(255, 215, 0, 0.95);
+  }
+  100% {
+    transform: scale(1) translateY(0);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.85);
+  }
+}

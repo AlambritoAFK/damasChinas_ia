@@ -1,0 +1,794 @@
+/**
+ * frontend/css/style.css
+ * 
+ * Estilos globales, paleta de colores, paneles de control,
+ * marcadores de piezas, estado de turnos, métricas de IA,
+ * registro de jugadas, modal de fin de partida y diseño responsivo.
+ */
+
+/* ==========================================================================
+   1. Variables CSS y Tematización
+   ========================================================================== */
+
+:root {
+  /* Paleta Oscura Sofisticada y Acentos Cálidos */
+  --bg-primary: #0f131c;
+  --bg-surface: #181c24;
+  --bg-surface-elevated: #1c2029;
+  --bg-surface-high: #262a33;
+  --bg-surface-highest: #31353e;
+  --bg-surface-lowest: #0a0e17;
+
+  /* Colores de Acento y Marca */
+  --primary: #ffb68c;
+  --primary-container: #d97736;
+  --primary-fixed: #ffdbc9;
+  --on-primary: #532200;
+  
+  --secondary: #7bd0ff;
+  --secondary-container: #00a6e0;
+  --on-secondary: #00354a;
+  
+  --accent-gold: #ffc107;
+  --error: #ffb4ab;
+  --error-container: #93000a;
+  --success: #69f0ae;
+  
+  /* Textos y Bordes */
+  --text-primary: #dfe2ef;
+  --text-secondary: #dbc1b4;
+  --text-muted: #8d99ae;
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --border-focus: rgba(255, 182, 140, 0.4);
+
+  /* Tipografías */
+  --font-headline: 'Space Grotesk', sans-serif;
+  --font-body: 'Plus Jakarta Sans', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+/* ==========================================================================
+   2. Reseteo y Base
+   ========================================================================== */
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  min-height: 100vh;
+  overflow-x: hidden;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Scrollbar Personalizada Estilizada */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-surface-lowest);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--bg-surface-high);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--primary-container);
+}
+
+/* ==========================================================================
+   3. Encabezado Principal y Barra de Herramientas
+   ========================================================================== */
+
+.app-header {
+  width: 100%;
+  background: rgba(24, 28, 36, 0.92);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border-subtle);
+  padding: 0.75rem 1.5rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.header-container {
+  max-width: 1280px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+/* Logo */
+.brand-logo {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  text-decoration: none;
+}
+
+.logo-badge {
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 0.5rem;
+  background: var(--primary-container);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.35), 0 2px 8px rgba(217, 119, 54, 0.4);
+}
+
+.logo-badge .material-symbols-outlined {
+  color: var(--on-primary);
+  font-size: 1.35rem;
+  font-weight: 700;
+}
+
+.brand-title {
+  font-family: var(--font-headline);
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--primary);
+  letter-spacing: -0.01em;
+  line-height: 1.1;
+}
+
+.brand-title .brand-accent {
+  color: var(--secondary);
+}
+
+.brand-subtitle {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+/* Controles de Configuración de Partida */
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.control-group {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: 0.5rem;
+  padding: 0.35rem 0.65rem;
+}
+
+.control-label {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.custom-select {
+  background: transparent;
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 0.825rem;
+  font-weight: 500;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  padding-right: 0.25rem;
+}
+
+.custom-select option {
+  background-color: var(--bg-surface-elevated);
+  color: var(--text-primary);
+}
+
+/* Botones de Acción */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.45rem 0.85rem;
+  border-radius: 0.5rem;
+  font-family: var(--font-headline);
+  font-size: 0.825rem;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  user-select: none;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-container) 100%);
+  color: var(--on-primary);
+  box-shadow: 0 2px 8px rgba(217, 119, 54, 0.35);
+}
+
+.btn-primary:hover {
+  filter: brightness(1.12);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(217, 119, 54, 0.45);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+.btn-danger {
+  background: rgba(147, 0, 10, 0.25);
+  color: var(--error);
+  border: 1px solid rgba(255, 180, 171, 0.3);
+}
+
+.btn-danger:hover {
+  background: rgba(147, 0, 10, 0.45);
+  border-color: var(--error);
+  transform: translateY(-1px);
+}
+
+/* Indicador de Estado del Servidor */
+.server-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  padding: 0.25rem 0.55rem;
+  border-radius: 9999px;
+  background: rgba(105, 240, 174, 0.1);
+  color: var(--success);
+  border: 1px solid rgba(105, 240, 174, 0.25);
+}
+
+.status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--success);
+  box-shadow: 0 0 6px var(--success);
+  animation: pulse-dot 2s infinite ease-in-out;
+}
+
+.server-badge.offline {
+  background: rgba(255, 82, 82, 0.1);
+  color: var(--error);
+  border-color: rgba(255, 82, 82, 0.25);
+}
+
+.server-badge.offline .status-dot {
+  background: var(--error);
+  box-shadow: 0 0 6px var(--error);
+  animation: none;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.85); }
+}
+
+/* ==========================================================================
+   4. Layout Principal (Main Arena)
+   ========================================================================== */
+
+.main-arena {
+  width: 100%;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1.5rem;
+}
+
+.arena-grid {
+  max-width: 1280px;
+  width: 100%;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2rem;
+}
+
+@media (min-width: 1024px) {
+  .arena-grid {
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: center;
+  }
+}
+
+/* ==========================================================================
+   5. Panel Lateral de Juego y Métricas
+   ========================================================================== */
+
+.side-panel {
+  width: 100%;
+  max-width: 400px;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* 5.1 Indicador de Turno Activo */
+.turn-banner {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 0.75rem;
+  padding: 0.85rem 1.15rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+  position: relative;
+  overflow: hidden;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.turn-banner.active-white {
+  border-color: rgba(255, 182, 140, 0.45);
+  box-shadow: 0 0 20px rgba(255, 182, 140, 0.15);
+}
+
+.turn-banner.active-black {
+  border-color: rgba(123, 208, 255, 0.45);
+  box-shadow: 0 0 20px rgba(123, 208, 255, 0.15);
+}
+
+.turn-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.turn-avatar {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+}
+
+.turn-text-title {
+  font-family: var(--font-headline);
+  font-size: 0.95rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.turn-text-sub {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+/* Indicador de "IA Pensando..." */
+.ai-thinking-badge {
+  display: none;
+  align-items: center;
+  gap: 0.35rem;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--secondary);
+  background: rgba(123, 208, 255, 0.12);
+  padding: 0.25rem 0.6rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(123, 208, 255, 0.25);
+  animation: pulse-thinking 1.5s infinite ease-in-out;
+}
+
+.ai-thinking-badge.visible {
+  display: inline-flex;
+}
+
+@keyframes pulse-thinking {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+/* 5.2 Marcadores de Piezas (Scoreboard) */
+.scoreboard-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.score-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 0.75rem;
+  padding: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.score-card:hover {
+  border-color: var(--border-focus);
+}
+
+.score-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.score-player-name {
+  font-family: var(--font-headline);
+  font-size: 0.825rem;
+  font-weight: 600;
+}
+
+.score-badge {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  padding: 0.15rem 0.45rem;
+  border-radius: 0.25rem;
+  background: var(--bg-surface-high);
+  color: var(--text-secondary);
+}
+
+.score-counts {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.piece-count-large {
+  font-family: var(--font-mono);
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.piece-count-sub {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+/* 5.3 Panel de Registro de Jugadas (Docket Parchment) */
+.moves-docket-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 0.75rem;
+  padding: 1rem;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  display: flex;
+  flex-direction: column;
+  height: 380px;
+}
+
+.docket-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 0.5rem;
+  margin-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.docket-title {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-family: var(--font-headline);
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.docket-badge {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: 0.25rem;
+  background: var(--bg-surface-elevated);
+  color: var(--text-muted);
+}
+
+.docket-table-header {
+  display: grid;
+  grid-template-columns: 2.5rem 1fr 1fr;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  padding: 0.35rem 0.5rem;
+  background: var(--bg-surface-lowest);
+  border-radius: 0.375rem;
+  margin-bottom: 0.35rem;
+}
+
+.docket-moves-list {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding-right: 0.25rem;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+}
+
+.move-row {
+  display: grid;
+  grid-template-columns: 2.5rem 1fr 1fr;
+  align-items: center;
+  padding: 0.3rem 0.5rem;
+  border-radius: 0.25rem;
+  background: rgba(10, 14, 23, 0.4);
+  color: var(--text-secondary);
+  transition: background-color 0.15s ease;
+}
+
+.move-row:hover {
+  background: var(--bg-surface-elevated);
+}
+
+.move-row.current-move {
+  background: rgba(255, 182, 140, 0.15);
+  border-left: 2px solid var(--primary);
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.docket-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 0.5rem;
+  margin-top: 0.5rem;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.nav-btn-group {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.icon-btn {
+  width: 1.85rem;
+  height: 1.85rem;
+  border-radius: 0.375rem;
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.icon-btn:hover {
+  color: var(--text-primary);
+  background: var(--bg-surface-high);
+}
+
+.icon-btn .material-symbols-outlined {
+  font-size: 1.1rem;
+}
+
+/* 5.4 Panel Colapsable de Métricas de la IA */
+.metrics-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 0.75rem;
+  padding: 0.85rem;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+}
+
+.metrics-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  user-select: none;
+}
+
+.metrics-title {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-family: var(--font-headline);
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--secondary);
+}
+
+.metrics-body {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+  margin-top: 0.65rem;
+  padding-top: 0.65rem;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.metrics-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.metrics-label {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+.metrics-value {
+  font-family: var(--font-mono);
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+/* ==========================================================================
+   6. Modal de Fin de Partida (Game Over Dialog)
+   ========================================================================== */
+
+.game-modal {
+  border: none;
+  background: transparent;
+  padding: 0;
+  margin: auto;
+  max-width: 480px;
+  width: 90%;
+  border-radius: 1.25rem;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.85);
+  outline: none;
+}
+
+.game-modal::backdrop {
+  background: rgba(10, 14, 23, 0.8);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.modal-content-card {
+  background: linear-gradient(145deg, #1c2029 0%, #10141d 100%);
+  border: 1px solid var(--border-focus);
+  border-radius: 1.25rem;
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 1.25rem;
+}
+
+.modal-icon-wrapper {
+  width: 4.5rem;
+  height: 4.5rem;
+  border-radius: 50%;
+  background: rgba(255, 182, 140, 0.15);
+  border: 2px solid var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 24px rgba(255, 182, 140, 0.4);
+}
+
+.modal-icon-wrapper .material-symbols-outlined {
+  font-size: 2.5rem;
+  color: var(--primary);
+}
+
+.modal-title {
+  font-family: var(--font-headline);
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--primary);
+  line-height: 1.2;
+}
+
+.modal-description {
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+  max-width: 360px;
+}
+
+.modal-stats-grid {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+  background: var(--bg-surface-lowest);
+  border: 1px solid var(--border-subtle);
+  border-radius: 0.75rem;
+  padding: 0.75rem;
+}
+
+.modal-stat-box {
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-stat-num {
+  font-family: var(--font-mono);
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.modal-stat-text {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 0.75rem;
+  width: 100%;
+  margin-top: 0.5rem;
+}
+
+.modal-actions .btn {
+  flex: 1;
+  justify-content: center;
+  padding: 0.75rem 1rem;
+  font-size: 0.9rem;
+}
+
+/* ==========================================================================
+   7. Responsividad Móvil y Adaptabilidad
+   ========================================================================== */
+
+@media (max-width: 1023px) {
+  .main-arena {
+    padding: 1rem 0.5rem;
+  }
+  .side-panel {
+    max-width: 660px;
+  }
+  .moves-docket-card {
+    height: 280px;
+  }
+}
+
+@media (max-width: 640px) {
+  .app-header {
+    padding: 0.5rem 0.75rem;
+  }
+  .header-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+  .control-group {
+    flex: 1;
+  }
+  .scoreboard-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .metrics-body {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+}
